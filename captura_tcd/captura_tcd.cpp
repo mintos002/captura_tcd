@@ -222,12 +222,16 @@ int main(int argc, char* argv[])
 
 	bool intel_postprocess = true;
 	int flip_mode = 0;
+	int pattern_temp = 0;
+	int pattern_color = 0;
 	int negative_mode = false;
 	bool save_default_images = true;
 
 	bool detect_circles = false;
 	int board_width;
 	int board_height;
+
+	int img_saved = 0;
 	
 	// READ CONFIG VALUES
 	cv::FileStorage fs(inputSettingsFile, cv::FileStorage::READ); // Read the settings
@@ -244,7 +248,8 @@ int main(int argc, char* argv[])
 	fs["IntelFPS"] >> cd_fps;
 	fs["IntelPostprocess"] >> intel_postprocess;
 	fs["FlipMode"] >> flip_mode;
-	fs["NegativeMode"] >> negative_mode;
+	fs["PatternTemp"] >> pattern_temp;
+	fs["PatternColor"] >> pattern_color;
 	fs["SaveDefaultImages"] >> save_default_images;
 	fs["AsymCirlePaternDetector"] >> detect_circles;
 	fs["BoardSize_Width"] >> board_width;
@@ -288,15 +293,21 @@ int main(int argc, char* argv[])
 		system("pause");
 		return -1;
 	}
-	if (negative_mode < 0 && negative_mode > 3)
+	if (pattern_temp < 0 && pattern_temp > 1)
 	{
-		printf("Invalid flip mode.\n");
+		printf("Invalid pattern mode.\n");
+		system("pause");
+		return -1;
+	}
+	if (pattern_color < 0 && pattern_color > 1)
+	{
+		printf("Invalid pattern color.\n");
 		system("pause");
 		return -1;
 	}
 	if (board_width <= 0 || board_height <= 0)
 	{
-		printf("Invalid negative mode.\n");
+		printf("Invalid board size.\n");
 		system("pause");
 		return -1;
 	}
@@ -409,21 +420,20 @@ int main(int argc, char* argv[])
 		frames.apply_filter(color_map);
 		depth_frame = frames.get_depth_frame().apply_filter(color_map);
 		cv::Mat depth_cm(cv::Size(depth_width, depth_height), CV_8UC3, (void*)depth_frame.get_data(), cv::Mat::AUTO_STEP);
-
-
+		
 		// Save images variables
 		c_image = img;
 		d_image = depth;
 		d_image_cm = depth_cm;
 
-		// save backup images before modify if save_default_images is true
+		// save backup images before modify if save_default_images is false
 		if (save_default_images)
 		{
 			bkt_image = t_image.clone();
 			bkc_image = c_image.clone();
 			bkd_image = d_image.clone();
 		}
-
+		
 		// Modify images
 		// Flip
 		cv::Mat t;
@@ -452,21 +462,7 @@ int main(int argc, char* argv[])
 			d_image_cm = depth_cm.clone();
 			break;
 		}
-		// Negative
-		switch (negative_mode)
-		{
-		case 1:
-			cv::bitwise_not(t_image, t_image);
-			break;
-		case 2:
-			cv::bitwise_not(c_image, c_image);
-			break;
-		case 3:
-			cv::bitwise_not(t_image, t_image);
-			cv::bitwise_not(c_image, c_image);
-			break;
-		}
-
+		
 		// save backup images before modify if save_default_images is false
 		if (!save_default_images)
 		{
@@ -474,8 +470,7 @@ int main(int argc, char* argv[])
 			bkc_image = c_image.clone();
 			bkd_image = d_image.clone();
 		}
-		
-		
+				
 		// Find circles
 		bool t_circles_found;
 		bool c_circles_found;
@@ -483,9 +478,35 @@ int main(int argc, char* argv[])
 		std::vector<cv::Point2f> c_centers;
 		if (detect_circles)
 		{
-			t_image.convertTo(t_image, CV_8UC1, 1 / 256.0);
-			t_circles_found = cv::findCirclesGrid(t_image, patternsize, t_centers, cv::CALIB_CB_ASYMMETRIC_GRID);
-			c_circles_found = cv::findCirclesGrid(c_image, patternsize, c_centers, cv::CALIB_CB_ASYMMETRIC_GRID);
+			cv::Mat t_img = t_image.clone();
+			cv::Mat c_img = c_image.clone();
+			// convert thermal 16U to 8U
+			t_img.convertTo(t_img, CV_8UC1, 1 / 256.0);
+			// increase contrast color img
+			c_img.convertTo(c_img, -1, 1.75, 0);
+
+			// Negative images
+			if (pattern_temp == 1)
+			{
+				cv::bitwise_not(t_img, t_img);
+			}
+			if (pattern_color == 0)
+			{
+				cv::bitwise_not(c_img, c_img);
+			}
+
+			t_circles_found = cv::findCirclesGrid(t_img, patternsize, t_centers, cv::CALIB_CB_ASYMMETRIC_GRID);
+			c_circles_found = cv::findCirclesGrid(c_img, patternsize, c_centers, cv::CALIB_CB_ASYMMETRIC_GRID);
+			
+			//// return to original color
+			//if (pattern_temp == 1)
+			//{
+			//	cv::bitwise_not(t_image, t_image);
+			//}
+			//if (pattern_color == 0)
+			//{
+			//	cv::bitwise_not(c_image, c_image);
+			//}
 
 			if (t_circles_found)
 			{
@@ -501,16 +522,25 @@ int main(int argc, char* argv[])
 		if (t_image.empty() == false)
 		{
 			cv::namedWindow("Thermal camera", cv::WINDOW_AUTOSIZE);
+			char txt[50];
+			sprintf(txt, "%d Set captured", img_saved);
+			cv::putText(t_image, txt, cv::Point(5, 475), cv::FONT_HERSHEY_DUPLEX, 0.85, 0xffff, 1);
 			cv::imshow("Thermal camera", t_image);
 		}
 		if (c_image.empty() == false)
 		{
 			cv::namedWindow("Color camera", cv::WINDOW_AUTOSIZE);
+			char txt[50];
+			sprintf(txt, "%d Set captured", img_saved);
+			cv::putText(c_image, txt, cv::Point(5, cd_imheight-5), cv::FONT_HERSHEY_DUPLEX, 0.85, cv::Scalar(0, 0, 255), 1);
 			cv::imshow("Color camera", c_image);
 		}
 		if (d_image_cm.empty() == false)
 		{
 			cv::namedWindow("Depth camera", cv::WINDOW_AUTOSIZE);
+			char txt[50];
+			sprintf(txt, "%d Set captured", img_saved);
+			cv::putText(d_image_cm, txt, cv::Point(5, cd_imheight - 5), cv::FONT_HERSHEY_DUPLEX, 0.85, cv::Scalar(0, 0, 255), 1);
 			cv::imshow("Depth camera", d_image_cm);
 		}
 
@@ -531,6 +561,7 @@ int main(int argc, char* argv[])
 			else
 			{
 				printf("Images %s.png are saved.\n", time.c_str());
+				img_saved++;
 			}
 		}
 		if (key == 'r')
@@ -557,6 +588,7 @@ int main(int argc, char* argv[])
 			else
 			{
 				printf("Images %s.png are saved.\n", time.c_str());
+				img_saved++;
 			}
 		}
 	}

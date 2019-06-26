@@ -28,19 +28,21 @@
         - 2 flip color & depth
         - 3 flip all -->
   <FlipMode>0</FlipMode>
-  <!-- Do image negative 
-        - 0 no negative (default)
-        - 1 create negative thermal image
-        - 2 create negative color image
-        - 3 thermal & color negative images-->
-  <NegativeMode>3</NegativeMode>
+  <!-- Modes of the calibration pattern
+        - 0 if the calibration pattern is hot and the background is cold (default)
+        - 1 if the calibration pattern is cold and the backtround is hot  -->
+  <PatternTemp>0</PatternTemp>
+  <!-- Color of the calibration pattern
+        - 0 Black board with white circles (default)
+        - 1 White board with black circles -->
+  <PatternColor>0</PatternColor>
   
   <!-- Save modifyed images 
-        - 0 to save imagees with selected FlipMode & NegativeMode
-        - 1 to save images as default FlipMode & NegativeMode (default) 
+        - 0 to save imagees with selected FlipMode (default) 
+        - 1 to save images as default FlipMode
         NOTE: To detect the cirle pattern it must appear with white background and black cercles.
         That way if you want to see the circle detection but save the images as default select 0 -->
-  <SaveDefaultImages>1</SaveDefaultImages>
+  <SaveDefaultImages>0</SaveDefaultImages>
   
   <!-- Detect the asymmetric circle pattern, the pattern must appear with white background and black cercles 
         - 0 Do not detect the pattern (default)
