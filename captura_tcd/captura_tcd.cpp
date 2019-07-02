@@ -13,7 +13,11 @@
 #include "camara_termica_xenics.h"
 #include "librealsense2/rs.hpp"
 
+#include <clocale>
+
 #pragma warning(disable:4996)
+
+
 
 // VARIABLE DEFINITION
 #define CHESS 0;
@@ -345,7 +349,7 @@ int main(int argc, char* argv[])
 	// create the directory for the images
 	if (!createDir(path_save))
 	{
-		printf("Path does not exist or the app failed to create the output folder");
+		printf("Path does not exist or the app failed to create the output folder\n");
 		system("pause");
 		return -1;
 	}

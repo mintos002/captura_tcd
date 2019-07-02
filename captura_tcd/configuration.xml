@@ -4,18 +4,18 @@
   <!-- Path where images will be saved 
           - by default images will be saved inside the same application folder,
             set the output path surrounded by "". For example: "C:\dir\"  -->
-  <PathSave>""</PathSave>
+  <PathSave>"C:\Users\aljuasin\Desktop\captura_tcd\imágenes\jetson"</PathSave>
   <!-- Delete all files of the output_images file in Path
         - 0 do not delete (default)
         - 1 delete -->
-  <DeleteDir>1</DeleteDir>
+  <DeleteDir>0</DeleteDir>
   
   <!-- Color and depth image resolution mode and frames per second 
         - IntelResolution_mode 0 = 1280x720 (default)
         - IntelResolution_mode 1 = 640x480
         - IntelResolution_mode 2 = 848x480 
         - Recomended IntelFPS = 30, 15 or 6 ( If app crashes with a defined IntelResolution_mode try other IntelFPS configuration) -->
-  <IntelResolution_mode>0</IntelResolution_mode>
+  <IntelResolution_mode>1</IntelResolution_mode>
   <IntelFPS>30</IntelFPS>
   <!-- Postprocess realsense camera images 
         - 0 Do not postprocess (default) 
