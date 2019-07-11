@@ -214,6 +214,7 @@ std::string get_time()
 // MAIN ---------------------------------------------------------------------------
 int main(int argc, char* argv[])
 {
+	printf("Starting capture application ...\n");
 	const std::string inputSettingsFile = argc > 1 ? argv[1] : "configuration.xml";
 	
 	// CONFIG
@@ -354,6 +355,25 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+	// Check if realsense is conected
+	rs2::context ctx;
+	rs2::device_list devices = ctx.query_devices();
+	rs2::device selected_device;
+	if (devices.size() == 0)
+	{
+		printf("No Intel RealSense connected, please connect the device.\n");
+		system("pause");
+		return -1;
+	}
+	else
+	{
+		printf("Intel RealSense device found.\n");
+		printf("\nATTENTION:\n"
+			"	- Make shure that the app has Windows FireWall permissions enabled.\n"
+			"	- If the app shuts down without warnings, make shure that the Intel RealSense camera is connected to a USB 3.0 port.\n"
+		);
+	}
+
 	// Configure intelrealsense
 	rs2::pipeline pipe;
 	rs2::config cfg;
@@ -369,6 +389,22 @@ int main(int argc, char* argv[])
 	cfg.enable_stream(RS2_STREAM_DEPTH, cd_imwidth, cd_imheight, RS2_FORMAT_Z16, cd_fps);
 
 	// Start cameras
+
+	/*rs2_error *e;
+	rs2::pipeline_profile prof;
+	try
+	{
+		auto prof = pipe.start(cfg);
+		
+	}
+	catch (const rs2::camera_disconnected_error& e)
+	{
+		std::cout << "cd" << std::endl;
+		system("pause");
+		return -1;
+	}
+	auto color_stream = prof.get_stream(RS2_STREAM_COLOR).as<rs2::video_stream_profile>();
+	auto depth_stream = prof.get_stream(RS2_STREAM_DEPTH).as<rs2::video_stream_profile>();*/
 	auto prof = pipe.start(cfg);
 	auto color_stream = prof.get_stream(RS2_STREAM_COLOR).as<rs2::video_stream_profile>();
 	auto depth_stream = prof.get_stream(RS2_STREAM_DEPTH).as<rs2::video_stream_profile>();
